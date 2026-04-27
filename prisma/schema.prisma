@@ -1,0 +1,93 @@
+// prisma/schema.prisma
+// Defines all database models for the market dashboard
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Gold & Silver price snapshots ───────────────────────────────────────────
+model MetalPrice {
+  id        Int      @id @default(autoincrement())
+  metal     String   // "gold" | "silver" | "platinum"
+  currency  String   // "EGP" | "USD"
+  pricePerGram   Float
+  pricePerOunce  Float
+  pricePerKilo   Float
+  change24h      Float    @default(0)    // % change in last 24h
+  change7d       Float    @default(0)
+  source    String   @default("goldapi")
+  createdAt DateTime @default(now())
+
+  @@index([metal, currency, createdAt])
+}
+
+// ─── Cryptocurrency prices ────────────────────────────────────────────────────
+model CryptoPrice {
+  id            Int      @id @default(autoincrement())
+  symbol        String   // "BTC" | "ETH" | "BNB" etc.
+  name          String
+  priceUSD      Float
+  priceEGP      Float
+  change24h     Float    @default(0)
+  change7d      Float    @default(0)
+  marketCapUSD  Float    @default(0)
+  volume24hUSD  Float    @default(0)
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+
+  @@index([symbol, createdAt])
+}
+
+// ─── Foreign exchange rates ───────────────────────────────────────────────────
+model ForexRate {
+  id        Int      @id @default(autoincrement())
+  pair      String   // "USD/EGP" | "EUR/EGP" | "GBP/EGP"
+  base      String
+  quote     String
+  rate      Float
+  change24h Float    @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([pair, createdAt])
+}
+
+// ─── Admin users ──────────────────────────────────────────────────────────────
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("editor") // "superadmin" | "editor"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Manual price overrides (admin panel) ────────────────────────────────────
+model PriceOverride {
+  id        Int      @id @default(autoincrement())
+  assetType String   // "metal" | "crypto" | "forex"
+  assetId   String   // symbol e.g. "gold", "BTC", "USD/EGP"
+  field     String   // which field is overridden
+  value     Float
+  note      String?
+  createdBy String
+  createdAt DateTime @default(now())
+  active    Boolean  @default(true)
+}
+
+// ─── Alert subscriptions ──────────────────────────────────────────────────────
+model PriceAlert {
+  id         Int      @id @default(autoincrement())
+  email      String
+  assetType  String   // "metal" | "crypto" | "forex"
+  assetId    String
+  condition  String   // "above" | "below"
+  targetPrice Float
+  triggered  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}

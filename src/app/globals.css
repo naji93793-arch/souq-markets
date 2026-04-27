@@ -1,0 +1,58 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Space Grotesk', sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* RTL font switch */
+[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+
+/* Number formatting — always LTR regardless of page dir */
+.font-mono, td, th {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Light mode overrides */
+.light {
+  --bg-primary: #f8f7f4;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-950 text-gray-100;
+  }
+  .light body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+/* Animated gradient shimmer for loading skeletons */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
