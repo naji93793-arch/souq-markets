@@ -3,7 +3,6 @@
 // No API key required for basic endpoints
 
 import axios from 'axios';
-import type { CryptoPrice } from '@/types';
 import { fetchUSDtoEGP } from './metals';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
@@ -28,7 +27,7 @@ export type CoinId = (typeof TRACKED_COINS)[number];
  * Fetch prices for all tracked coins in USD.
  * CoinGecko free tier: 10-30 calls/min.
  */
-export async function fetchCryptoPrices(): Promise<CryptoPrice[]> {
+export async function fetchCryptoPrices(): Promise<any[]> {
   const usdToEgp = await fetchUSDtoEGP();
   
   try {
@@ -52,7 +51,7 @@ export async function fetchCryptoPrices(): Promise<CryptoPrice[]> {
       },
     });
 
-    return response.data.map((coin: CoinGeckoCoin): CryptoPrice => ({
+    return response.data.map((coin: any): any => ({
       symbol: coin.symbol.toUpperCase(),
       name: coin.name,
       priceUSD: coin.current_price,
@@ -73,7 +72,6 @@ export async function fetchCryptoPrices(): Promise<CryptoPrice[]> {
 
 /**
  * Fetch price history for a single coin.
- * range: '1' | '7' | '30' | '90' | '365' (days)
  */
 export async function fetchCryptoHistory(
   coinId: string,
@@ -98,21 +96,8 @@ export async function fetchCryptoHistory(
   }
 }
 
-// ─── Internal types ───────────────────────────────────────────────────────────
-interface CoinGeckoCoin {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  total_volume: number;
-  price_change_percentage_24h: number;
-  price_change_percentage_7d_in_currency: number;
-}
-
 // ─── Demo fallback ────────────────────────────────────────────────────────────
-function getDemoCryptoPrices(usdToEgp: number): CryptoPrice[] {
+function getDemoCryptoPrices(usdToEgp: number): any[] {
   const demoCoins = [
     { symbol: 'BTC', name: 'Bitcoin',  priceUSD: 67500, change24h: 1.2, change7d: -3.1, mcap: 1.33e12, vol: 28e9, img: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png' },
     { symbol: 'ETH', name: 'Ethereum', priceUSD: 3600,  change24h: 0.8, change7d: -1.5, mcap: 4.3e11,  vol: 15e9, img: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
@@ -131,6 +116,7 @@ function getDemoCryptoPrices(usdToEgp: number): CryptoPrice[] {
     marketCapUSD: c.mcap,
     volume24hUSD: c.vol,
     imageUrl: c.img,
+    source: 'demo'
   }));
 }
 

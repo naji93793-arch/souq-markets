@@ -16,10 +16,10 @@ export interface MetalPrice {
 }
 
 export interface MetalPriceDisplay extends MetalPrice {
-  label: string;        // human-readable name (Arabic/English)
+  label: string;         // human-readable name (Arabic/English)
   labelAr: string;
-  icon: string;         // emoji or icon code
-  color: string;        // tailwind color class
+  icon: string;          // emoji or icon code
+  color: string;         // tailwind color class
 }
 
 // ─── Crypto ───────────────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ export interface CryptoPrice {
   marketCapUSD: number;
   volume24hUSD: number;
   imageUrl?: string;
+  source?: string; // أضفنا هذا السطر هنا لحل مشكلة الـ Build
   createdAt?: Date | string;
 }
 
