@@ -1,8 +1,7 @@
 'use client';
-// src/app/admin/page.tsx
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store';
-import { RefreshCw, LogIn, LogOut, Shield, Zap } from 'lucide-react';
+import { RefreshCw, LogIn, LogOut, Shield, PlusCircle, Trash2 } from 'lucide-react';
 
 export default function AdminPage() {
   const { adminToken, setAdminToken } = useAppStore();
@@ -15,7 +14,14 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [overrides, setOverrides] = useState<any[]>([]);
 
-  // Load stats if logged in
+  // State for new override form
+  const [newOverride, setNewOverride] = useState({
+    assetType: 'metal',
+    assetId: 'XAU',
+    field: 'price',
+    value: ''
+  });
+
   useEffect(() => {
     if (adminToken) loadStats();
   }, [adminToken]);
@@ -34,6 +40,24 @@ export default function AdminPage() {
     });
     const ovJson = await ovRes.json();
     if (ovJson.success) setOverrides(ovJson.data);
+  }
+
+  async function handleAddOverride(e: React.FormEvent) {
+    e.preventDefault();
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        action: 'add_override', 
+        ...newOverride, 
+        value: parseFloat(newOverride.value) 
+      }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      setNewOverride({ ...newOverride, value: '' });
+      loadStats();
+    }
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -68,43 +92,42 @@ export default function AdminPage() {
     loadStats();
   }
 
-  // ── Not logged in ──────────────────────────────────────────────────────────
   if (!adminToken) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/4 p-8">
-          <div className="mb-6 flex items-center gap-3">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/4 p-8 text-right" dir="rtl">
+          <div className="mb-6 flex items-center justify-end gap-3">
+            <div className="text-right">
+              <h1 className="font-bold text-white text-lg">لوحة التحكم</h1>
+              <p className="text-xs text-gray-500">سوق باطورة — Souq Markets</p>
+            </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
               <Shield size={20} />
-            </div>
-            <div>
-              <h1 className="font-bold text-white">Admin Panel</h1>
-              <p className="text-xs text-gray-500">Souq Markets</p>
             </div>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="email"
-              placeholder="Email"
+              placeholder="البريد الإلكتروني"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-amber-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-amber-500/50 text-right"
             />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="كلمة المرور"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-amber-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-amber-500/50 text-right"
             />
-            {loginError && <p className="text-xs text-red-400">{loginError}</p>}
+            {loginError && <p className="text-xs text-red-400 text-center">{loginError}</p>}
             <button
               type="submit"
               disabled={loginLoading}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 py-2.5 text-sm font-semibold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
             >
               <LogIn size={16} />
-              {loginLoading ? 'Signing in...' : 'Sign In'}
+              {loginLoading ? 'جاري الدخول...' : 'تسجيل الدخول'}
             </button>
           </form>
         </div>
@@ -112,41 +135,38 @@ export default function AdminPage() {
     );
   }
 
-  // ── Logged in ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
+    <div className="min-h-screen bg-gray-950 p-6 text-right" dir="rtl">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
-              <Shield size={20} />
-            </div>
-            <div>
-              <h1 className="font-bold text-white">Admin Panel</h1>
-              <p className="text-xs text-gray-500">Souq Markets — control center</p>
-            </div>
-          </div>
           <button
             onClick={() => setAdminToken(null)}
             className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-400 hover:text-white"
           >
-            <LogOut size={14} /> Logout
+            خروج <LogOut size={14} />
           </button>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <h1 className="font-bold text-white text-xl">لوحة التحكم</h1>
+              <p className="text-xs text-gray-500">إدارة أسعار سوق باطورة</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
+              <Shield size={20} />
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { label: 'Metal records', value: stats.metalRecords },
-              { label: 'Crypto records', value: stats.cryptoRecords },
-              { label: 'Forex records', value: stats.forexRecords },
+              { label: 'سجلات الذهب', value: stats.metalRecords },
+              { label: 'سجلات العملات الرقمية', value: stats.cryptoRecords },
+              { label: 'سجلات الفوركس', value: stats.forexRecords },
               {
-                label: 'Last update',
-                value: stats.lastUpdate
-                  ? new Date(stats.lastUpdate).toLocaleTimeString()
-                  : 'Never',
+                label: 'آخر تحديث',
+                value: stats.lastUpdate ? new Date(stats.lastUpdate).toLocaleTimeString('ar-EG') : 'أبداً',
               },
             ].map(s => (
               <div key={s.label} className="rounded-xl border border-white/8 bg-white/4 p-4">
@@ -157,83 +177,100 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Actions */}
+        {/* Add New Override Form */}
         <div className="rounded-2xl border border-white/8 bg-white/3 p-6">
-          <h2 className="mb-4 font-semibold text-white">Actions</h2>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
+          <h2 className="mb-4 font-semibold text-white flex items-center gap-2">
+            <PlusCircle size={18} className="text-amber-500" /> إضافة تعديل يدوي للسعر
+          </h2>
+          <form onSubmit={handleAddOverride} className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <select 
+              value={newOverride.assetType}
+              onChange={e => setNewOverride({...newOverride, assetType: e.target.value})}
+              className="rounded-lg bg-gray-900 border border-white/10 p-2 text-sm text-white outline-none focus:border-amber-500"
             >
-              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-              {refreshing ? 'Refreshing all prices...' : 'Force refresh all prices'}
+              <option value="metal">ذهب/معادن</option>
+              <option value="forex">عملات/فوركس</option>
+              <option value="crypto">عملات رقمية</option>
+            </select>
+            <input 
+              type="text"
+              placeholder="الكود (مثل XAU أو USD)"
+              value={newOverride.assetId}
+              onChange={e => setNewOverride({...newOverride, assetId: e.target.value.toUpperCase()})}
+              className="rounded-lg bg-gray-900 border border-white/10 p-2 text-sm text-white text-right outline-none focus:border-amber-500"
+            />
+            <input 
+              type="number"
+              step="0.01"
+              placeholder="السعر بالجنيه المصري"
+              value={newOverride.value}
+              onChange={e => setNewOverride({...newOverride, value: e.target.value})}
+              className="rounded-lg bg-gray-900 border border-white/10 p-2 text-sm text-white text-right outline-none focus:border-amber-500"
+            />
+            <button type="submit" className="bg-amber-500 text-gray-950 font-bold py-2 rounded-lg hover:bg-amber-400 transition-colors">
+              حفظ السعر
             </button>
-          </div>
-
-          {refreshResult && (
-            <div className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-950/30 p-4 text-sm">
-              <p className="font-medium text-emerald-400">Refresh complete</p>
-              <ul className="mt-2 space-y-1 text-gray-400">
-                <li>Metals saved: {refreshResult.metals}</li>
-                <li>Crypto saved: {refreshResult.crypto}</li>
-                <li>Forex saved: {refreshResult.forex}</li>
-                {refreshResult.errors?.length > 0 && (
-                  <li className="text-red-400">Errors: {refreshResult.errors.join(', ')}</li>
-                )}
-              </ul>
-            </div>
-          )}
+          </form>
         </div>
 
         {/* Active overrides */}
         <div className="rounded-2xl border border-white/8 bg-white/3 p-6">
-          <h2 className="mb-4 font-semibold text-white">Active Price Overrides</h2>
+          <h2 className="mb-4 font-semibold text-white">الأسعار المعدلة حالياً</h2>
           {overrides.length === 0 ? (
-            <p className="text-sm text-gray-500">No active overrides.</p>
+            <p className="text-sm text-gray-500 text-center py-4">لا توجد أسعار معدلة يدوياً حالياً.</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/8 text-xs text-gray-500">
-                  <th className="pb-2 text-start">Asset</th>
-                  <th className="pb-2 text-start">Field</th>
-                  <th className="pb-2 text-end">Value</th>
-                  <th className="pb-2 text-end">By</th>
-                  <th className="pb-2 text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overrides.map((ov: any) => (
-                  <tr key={ov.id} className="border-b border-white/5">
-                    <td className="py-2 text-amber-400">{ov.assetId}</td>
-                    <td className="py-2 text-gray-300">{ov.field}</td>
-                    <td className="py-2 text-end font-mono text-white">{ov.value}</td>
-                    <td className="py-2 text-end text-gray-500">{ov.createdBy}</td>
-                    <td className="py-2 text-end">
-                      <button
-                        onClick={async () => {
-                          await fetch('/api/admin', {
-                            method: 'POST',
-                            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'remove_override', id: ov.id }),
-                          });
-                          loadStats();
-                        }}
-                        className="text-xs text-red-400 hover:text-red-300"
-                      >
-                        Remove
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/8 text-xs text-gray-500">
+                    <th className="pb-2 text-right">الأصل</th>
+                    <th className="pb-2 text-right">القيمة الحالية</th>
+                    <th className="pb-2 text-left">إجراءات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {overrides.map((ov: any) => (
+                    <tr key={ov.id} className="border-b border-white/5">
+                      <td className="py-3 text-amber-400 font-bold">{ov.assetId}</td>
+                      <td className="py-3 text-white font-mono">{ov.value.toLocaleString()} ج.م</td>
+                      <td className="py-3 text-left">
+                        <button
+                          onClick={async () => {
+                            await fetch('/api/admin', {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'remove_override', id: ov.id }),
+                            });
+                            loadStats();
+                          }}
+                          className="text-red-400 hover:text-red-300 p-1 rounded hover:bg-red-400/10 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        {/* Back link */}
+        {/* Actions */}
+        <div className="rounded-2xl border border-white/8 bg-white/3 p-6">
+          <h2 className="mb-4 font-semibold text-white">إجراءات النظام</h2>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'جاري تحديث كل الأسعار من المصادر...' : 'تحديث إجباري لكل الأسعار العالمية'}
+          </button>
+        </div>
+
         <a href="/" className="block text-center text-sm text-gray-500 hover:text-gray-300">
-          ← Back to dashboard
+          ← العودة للرئيسية
         </a>
       </div>
     </div>
